@@ -204,11 +204,36 @@ where WorkingPlaces.JobName='Maid' AND Employees.HotelId=1
 
 -- Dohvatiti kupnje od 1.12.2020. koje prelaze cijenu od 1000
 
-select * from Bookings where TransactionDate>'2020-12-01' and TotalPrice>1000
+select b.*,
+Guests.FirstName as 'GuestFirstName', 
+Guests.LastName as 'GuestLastName'
+from Bookings as b
+inner join BookingRooms ON b.Id = BookingRooms.BookingId
+left join Rooms ON BookingRooms.RoomId = Rooms.Id
+left join Guests ON BookingRooms.GuestId = Guests.Id 
+where TransactionDate>'2020-12-01' and TotalPrice>1000
 
 -- Dohvatiti sve boravke u svim hotelima koji su trenutno u tijeku
 
-select * from Bookings where CheckInDate < GETDATE() AND GETDATE()< CheckOutDate
+select 
+Buyers.FirstName as 'BuyerFirstName',
+Buyers.LastName as 'BuyerLastName',
+Bookings.AccomodationId,
+CASE
+    WHEN AccomodationId = 2 THEN 'Half Board'
+    WHEN AccomodationId = 3 THEN 'Full Board'
+    ELSE 'Nothing included'
+END AS Accomodation,
+Bookings.CheckInDate,
+Bookings.CheckOutDate, 
+Guests.FirstName as 'GuestFirstName', 
+Guests.LastName as 'GuestLastName'
+from Bookings
+left join Buyers ON Bookings.BuyersId= Buyers.Id  
+left join BookingRooms ON Bookings.Id = BookingRooms.BookingId
+left join Rooms ON BookingRooms.RoomId = Rooms.Id
+left join Guests ON BookingRooms.GuestId = Guests.Id 
+where CheckInDate < GETDATE() AND GETDATE()< CheckOutDate
 
 
 -- Izbrisati sve boravke koji su napravljeni prije 1.1.2020.
@@ -228,6 +253,12 @@ UPDATE Rooms SET Capacity = 4 WHERE HotelId=2 AND Capacity=3
 select 
 Buyers.FirstName as 'BuyerFirstName',
 Buyers.LastName as 'BuyerLastName',
+Bookings.AccomodationId,
+CASE
+    WHEN AccomodationId = 2 THEN 'Half Board'
+    WHEN AccomodationId = 3 THEN 'Full Board'
+    ELSE 'Nothing included'
+END AS Accomodation,
 Bookings.CheckInDate,
 Bookings.CheckOutDate, 
 Guests.FirstName as 'GuestFirstName', 
@@ -242,9 +273,15 @@ ORDER BY Bookings.CheckInDate
 
 
 -- Dohvatiti sve boravke koji su bili ili pansion ili polupansion, i to samo u određenom hotelu
-
-select Bookings.CheckInDate,
+select 
+Bookings.CheckInDate,
 Bookings.CheckOutDate, 
+Bookings.AccomodationId,
+CASE
+    WHEN AccomodationId = 2 THEN 'Half Board'
+    WHEN AccomodationId = 3 THEN 'Full Board'
+    ELSE 'Nothing included'
+END AS Accomodation,
 Guests.FirstName as 'GuestFirstName', 
 Guests.LastName as 'GuestLastName'
 from Bookings
@@ -257,7 +294,12 @@ where (Bookings.AccomodationId=2 OR Bookings.AccomodationId=3) AND Hotels.Name L
 
 
 -- Promovirati 2 zaposlenika sobne posluge u recepcioniste
+Select WorkingPlaces.Id from WorkingPlaces WHERE WorkingPlaces.JobName='Maid'
+Select WorkingPlaces.Id from WorkingPlaces WHERE WorkingPlaces.JobName='Receptionist'
 
-UPDATE Employees SET Employees.WorkingPlaceId = 2 where Employees.WorkingPlaceId=3
+UPDATE TOP (2) Employees 
+SET Employees.WorkingPlaceId = 2  where Employees.WorkingPlaceId = 3
+
+
 
 
